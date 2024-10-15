@@ -1,0 +1,8 @@
+conda create -n pytorch3d python=3.8
+conda activate pytorch3d
+conda install -c pytorch pytorch=1.7.0 torchvision cudatoolkit=11.0
+conda install -c conda-forge -c iopath fvcore iopath
+conda install -c pytorch3d pytorch3d
+
+
+https://github.com/facebookresearch/pytorch3d/issues/495
