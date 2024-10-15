@@ -1,0 +1,7 @@
+Envoie du dossier my_MTVN dans le dossier sur la tour MVTN
+scp -r /home/pelissier/These-ATER/Papier_international3/MVTN/my_MVTN mpelissi@147.127.92.108:~/MVTN/
+
+
+Envoie du fichier scp_commandlines.txt dans le dossier sur la tour MVTN
+ scp -r /home/pelissier/These-ATER/Papier_international3/MVTN/my_MVTN/scp_commandlines.txt  mpelissi@147.127.92.108:~/MVTN/
+
