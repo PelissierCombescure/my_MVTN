@@ -1,1 +1,4 @@
 mvtorch/__pycache__/
+
+# Ignore all .pycatch folders
+**/.pycatch/
