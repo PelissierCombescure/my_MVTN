@@ -19,7 +19,7 @@ def save_loss_acc(path_to_save, train_losses, test_losses, train_accuracies, tes
     plt.plot(test_accuracies, label='Test Accuracy', color='orange')
     plt.title('Accuracy Over Epochs')
     plt.xlabel('Epochs')
-    plt.ylabel('Accuracy (%)')
+    plt.ylabel('Accuracy (%) ')
     plt.legend()
 
     plt.tight_layout()
