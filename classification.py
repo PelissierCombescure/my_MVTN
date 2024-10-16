@@ -83,7 +83,7 @@ training_info = {
     'batch_size': None,  # You can set this based on your train_loader
     'train_losses': [],
     'train_accuracies': [],
-    'test_losses': [],
+    'test_losses':[],
     'test_accuracies': [],
     'best_accuracy': best_accuracy,
     'best_epoch': best_epoch
