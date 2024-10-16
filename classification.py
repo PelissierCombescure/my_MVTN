@@ -103,7 +103,7 @@ for epoch in range(epochs):
     
     # Use tqdm to create a progress bar
     with tqdm.tqdm(total=len(train_loader), desc=f'Training Epoch {epoch + 1}/{epochs}', unit='batch') as pbar:
-        for i, (targets, meshes, points) in tqdm.tqdm(enumerate(train_loader)):        
+        for i, (targets, meshes, points) in tqdm.tqdm(enumerate(train_loader)):      
             azim, elev, dist = mvtn(points, c_batch_size=len(targets))
             rendered_images, _ = mvrenderer(meshes, points, azim=azim, elev=elev, dist=dist)
             outputs = mvnetwork(rendered_images)[0]
@@ -121,7 +121,9 @@ for epoch in range(epochs):
                 mvtn_optimizer.zero_grad()
 
             # Update tqdm progress bar
-            #pbar.set_postfix({'loss': running_loss / (i + 1), 'accuracy': 100.0 * correct / ((i + 1) * len(targets))})
+            pbar.set_postfix({'loss': running_loss / (i + 1), 'accuracy': 100.0 * correct / ((i + 1) * len(targets))})
+            #if i == len(train_loader)-1:  
+                #pbar.set_postfix({'loss': running_loss / len(train_loader), 'accuracy': 100.0*correct / len(dset_train)})
             pbar.update(1)  # Increment progress bar
     
     avg_train_loss = running_loss / len(train_loader)
@@ -130,7 +132,7 @@ for epoch in range(epochs):
     train_accuracies.append(avg_train_accuracy)
         
     #print(f"\nAverage Training Loss = {(running_loss / len(train_loader)):.5f}. Average Training Accuracy = {(100.0*correct / len(dset_train)):.2f}.")
-    pbar.set_postfix({'loss': running_loss / len(train_loader), 'accuracy': 100.0*correct / len(dset_train)})
+   
     
     ############################################
     # Validate after each epoch
@@ -159,8 +161,8 @@ for epoch in range(epochs):
     test_losses.append(avg_test_loss)
     test_accuracies.append(avg_test_accuracy)
     
-    #print(f"\nTotal Average Test Loss = {(running_loss / len(test_loader)):.5f}.  Average Test Accuracy = {(100.0*correct / len(dset_test)):.2f}.")
-    pbar.set_postfix({'loss': running_loss / len(test_loader), 'accuracy': 100.0*correct / len(dset_test)})
+    print(f"Total Average Test Loss = {(running_loss / len(test_loader)):.5f}.  Average Test Accuracy = {(100.0*correct / len(dset_test)):.2f}.")
+    #pbar.set_postfix({'loss': running_loss / len(test_loader), 'accuracy': 100.0*correct / len(dset_test)})
     
     ############################################
     #print("\Saving...")
