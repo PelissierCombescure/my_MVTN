@@ -3,4 +3,4 @@ mvtorch/__pycache__/
 # Ignore all .pycatch folders
 **/__pycache__/
 
-results/
+results/*results*
