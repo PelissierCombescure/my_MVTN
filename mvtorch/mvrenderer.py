@@ -55,7 +55,7 @@ class MVRenderer(nn.Module):
         self.cull_backfaces = cull_backfaces
         self.return_mapping = return_mapping
 
-    def render_meshes(self,meshes, color, azim, elev, dist, lights, background_color=(1.0, 1.0, 1.0), ):
+    def render_meshes(self, meshes, color, azim, elev, dist, lights, background_color=(1.0, 1.0, 1.0), ):
         c_batch_size = len(meshes)
         verts = [msh.verts_list()[0].cuda() for msh in meshes]
         faces = [msh.faces_list()[0].cuda() for msh in meshes]
