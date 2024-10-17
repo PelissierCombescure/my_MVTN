@@ -83,6 +83,7 @@ test_losses = []; test_accuracies = []
 # Dictionary to store training parameters and results
 training_info = {
     'epochs': epochs,
+    'nb_views': nb_views,
     'learning_rate': 0.00001,
     'weight_decay': 0.03,
     'batch_size': None,  # You can set this based on your train_loader
