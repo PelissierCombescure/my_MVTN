@@ -11,7 +11,7 @@ Sure! Here's a list of commonly used shortcuts and commands for `screen`:
 | `screen -r session_id`             | Reconnect to a session using its ID                 |
 | `screen -d -r session_name`        | Detach another user's screen and reattach it        |
 | `exit`                             | Close the current screen session                    |
-
+| `screen -S <session id> -X quit`   | Deelete session using its ID                        |
 ### Detaching and Reattaching
 
 | Shortcut                            | Action                                              |
