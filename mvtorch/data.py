@@ -105,7 +105,7 @@ class ModelNet40(Dataset):
 
         return classes, class_to_idx
 
-    def __init__(self, data_dir, split, nb_points=2048, simplified_mesh=False, cleaned_mesh=False, dset_norm=2, return_points_saved=False, is_rotated=False):
+    def __init__(self, data_dir, split, nb_points=2048, simplified_mesh=False, cleaned_mesh=False, dset_norm=2, return_points_saved=False, is_rotated=False, samples_per_class=None):
         # self.x = []
         self.y = []
         self.data_list =[]
@@ -130,17 +130,18 @@ class ModelNet40(Dataset):
 
         # root / <label>  / <train/test> / <item> / <view>.png
         for label in os.listdir(self.data_dir):  # Label
-            for item in os.listdir(self.data_dir + '/' + label + '/' + self.split):
-                # views = []
-                # for view in os.listdir(self.data_dir + '/' + label + '/' + self.split + '/' + item):
-                    # views.append(self.data_dir + '/' + label + '/' +
-                    #              self.split + '/' + item + '/' + view)
+            # Get all .off files in the current directory
+            items = [item for item in os.listdir(self.data_dir + '/' + label + '/' + self.split) 
+                    if item.endswith(".off")]
 
-                # self.x.append(views)
-                if item.endswith(".off"):
-                    self.y.append(self.class_to_idx[label])
-                    self.data_list.append(self.data_dir + '/' + label + '/' + self.split + '/' + item)
-
+            # If samples_per_class is specified, limit the number of items
+            if samples_per_class is not None:
+                items = items[:samples_per_class]
+            # Add the items to the data list
+            for item in items:
+                self.y.append(self.class_to_idx[label])
+                self.data_list.append(self.data_dir + '/' + label + '/' + self.split + '/' + item)
+        
         self.simplified_data_list = [file_name.replace(
             ".off", "_SMPLER.obj") for file_name in self.data_list if file_name[-4::]==".off"]
         # self.cleaned_data_list = [file_name.replace(

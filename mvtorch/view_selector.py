@@ -326,7 +326,6 @@ class ViewSelector(nn.Module):
         return self.chosen_view_selector(shape_features=shape_features, c_batch_size=c_batch_size)
 
 
-
 class FeatureExtractor(nn.Module):
     def __init__(self,  shape_features_size, views_config, shape_extractor, screatch_feature_extractor=False):
         super().__init__()
