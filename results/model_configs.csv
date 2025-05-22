@@ -1,0 +1,3 @@
+name,nb_views,weights_path
+init-git,8,train/results_14-05_18h05m48/best
+init-git,1,/home/mpelissi/MVTN/my_MVTN/results/train/results_19-05_18h20m13/best
