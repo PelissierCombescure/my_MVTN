@@ -1,0 +1,3 @@
+Name,Nb_views,Weights_path,dir_modelnet40,config
+init-git,8,train/results_14-05_18h05m48/best,/home/mpelissi/Dataset/ModelNet40,circular
+init-git,1,train/results_19-05_18h20m13/best,/home/mpelissi/Dataset/ModelNet40,circular

@@ -15,6 +15,7 @@ from einops import rearrange
 class CircularViewSelector(nn.Module):
     def __init__(self, nb_views=12, canonical_elevation=35.0, canonical_distance=2.2, transform_distance=False, input_view_noise=0.0):
         super().__init__()
+        self.name = "CircularViewSelector"
         self.nb_views = nb_views
         self.transform_distance = transform_distance
         self.canonical_distance = canonical_distance
@@ -50,6 +51,7 @@ class CircularViewSelector(nn.Module):
 class SphericalViewSelector(nn.Module):
     def __init__(self, nb_views=12,canonical_distance=2.2, transform_distance=False, input_view_noise=0.0):
         super().__init__()
+        self.name = "SphericalViewSelector"
         self.nb_views = nb_views
         self.transform_distance = transform_distance
         self.canonical_distance = canonical_distance
@@ -85,6 +87,7 @@ class SphericalViewSelector(nn.Module):
 class RandomViewSelector(nn.Module):
     def __init__(self, nb_views=12, canonical_distance=2.2,  transform_distance=False):
         super().__init__()
+        self.name = "RandomViewSelector"
         self.nb_views = nb_views
         self.transform_distance = transform_distance
         self.canonical_distance = canonical_distance
@@ -116,6 +119,8 @@ class RandomViewSelector(nn.Module):
 class LearnedDirectViewSelector(nn.Module):
     def __init__(self, nb_views=12, canonical_elevation=35.0, canonical_distance=2.2, shape_features_size=512, transform_distance=False):
         super().__init__()
+        self.name = "LearnedDirectViewSelector"
+        
         self.nb_views = nb_views
         self.transform_distance = transform_distance
         self.canonical_distance = canonical_distance
@@ -153,6 +158,8 @@ class LearnedDirectViewSelector(nn.Module):
 class LearnedCircularViewSelector(nn.Module):
     def __init__(self, nb_views=12, canonical_elevation=35.0, canonical_distance=2.2, shape_features_size=512, transform_distance=False, input_view_noise=0.0):
         super().__init__()
+        self.name = "LearnedCircularViewSelector"
+        
         self.nb_views = nb_views
         self.transform_distance = transform_distance
         self.canonical_distance = canonical_distance
@@ -202,6 +209,8 @@ class LearnedCircularViewSelector(nn.Module):
 class LearnedSphericalViewSelector(nn.Module):
     def __init__(self, nb_views=12, canonical_elevation=35.0, canonical_distance=2.2, shape_features_size=512, transform_distance=False, input_view_noise=0.0):
         super().__init__()
+        self.name = "LearnedSphericalViewSelector"
+        
         self.nb_views = nb_views
         self.transform_distance = transform_distance
         self.canonical_distance = canonical_distance
@@ -253,6 +262,8 @@ class LearnedSphericalViewSelector(nn.Module):
 class LearnedRandomViewSelector(nn.Module):
     def __init__(self, nb_views=12, canonical_distance=2.2, shape_features_size=512, transform_distance=False, input_view_noise=0.0):
         super().__init__()
+        self.name = "LearnedRandomViewSelector"
+        
         self.nb_views = nb_views
         self.transform_distance = transform_distance
         self.canonical_distance = canonical_distance
@@ -379,9 +390,13 @@ class MVTN(nn.Module):
         self.feature_extractor = FeatureExtractor(shape_features_size=shape_features_size, views_config=views_config,
                                                   shape_extractor=shape_extractor, screatch_feature_extractor=screatch_feature_extractor)
 
-
+        print(f"\nSelector : {self.view_selector.chosen_view_selector.name}")
+        print(f"\nFeatureExt : {self.feature_extractor.features_origin}\n")
+        
     def forward(self, points=None, c_batch_size=1):
         shape_features = self.feature_extractor(points, c_batch_size)
+        print(f"Shape features size: {shape_features.shape}")
+        print(f"Shape features: {shape_features}")
         return self.view_selector(shape_features=shape_features, c_batch_size=c_batch_size)
 
 

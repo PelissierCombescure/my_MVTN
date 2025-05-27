@@ -105,7 +105,7 @@ class ModelNet40(Dataset):
 
         return classes, class_to_idx
 
-    def __init__(self, data_dir, split, nb_points=2048, simplified_mesh=False, cleaned_mesh=False, dset_norm=2, return_points_saved=False, is_rotated=False, samples_per_class=None):
+    def __init__(self, data_dir, split, nb_points=2048, simplified_mesh=False, cleaned_mesh=False, dset_norm=2, return_points_saved=False, is_rotated=False, samples_per_class=None, category = None):
         # self.x = []
         self.y = []
         self.data_list =[]
@@ -131,8 +131,15 @@ class ModelNet40(Dataset):
         # root / <label>  / <train/test> / <item> / <view>.png
         for label in os.listdir(self.data_dir):  # Label
             # Get all .off files in the current directory
+            if "remeshing_iso" in data_dir: extension = ".obj"                
+            else : extension = ".off"                
             items = [item for item in os.listdir(self.data_dir + '/' + label + '/' + self.split) 
-                    if item.endswith(".off")]
+                if item.endswith(extension)]
+            
+            # Focus on a specific category if specified
+            if category != 'all':
+                items = [item for item in items if category in item]               
+                
 
             # If samples_per_class is specified, limit the number of items
             if samples_per_class is not None:
@@ -141,26 +148,30 @@ class ModelNet40(Dataset):
             for item in items:
                 self.y.append(self.class_to_idx[label])
                 self.data_list.append(self.data_dir + '/' + label + '/' + self.split + '/' + item)
-        
-        self.simplified_data_list = [file_name.replace(
-            ".off", "_SMPLER.obj") for file_name in self.data_list if file_name[-4::]==".off"]
-        # self.cleaned_data_list = [file_name.replace(
-        #     ".off", "_RMV.obj") for file_name in self.data_list if file_name[-4::]==".off"]
-        # self.extracted_features_list = [file_name.replace(".off", "_PFeautres.pkl") for file_name in self.data_list if file_name[-4::] == ".off"]
-        self.points_list = [file_name.replace(".off", "POINTS.pkl") for file_name in self.data_list if file_name[-4::] == ".off"]
-        self.data_list, self.simplified_data_list, self.y, self.points_list = sort_jointly(
-            [self.data_list, self.simplified_data_list, self.y, self.points_list], dim=0)
-        if self.is_rotated:
-            df = pd.read_csv(os.path.join(self.data_dir,"..", "rotated_modelnet_{}.csv".format(self.split)), sep=",")
-            self.rotations_list = [df[df.mesh_path.isin([x])].to_dict("list") for x in self.data_list]
-        
-        self.correction_factors = [1]*len(self.data_list)
-        if self.cleaned_mesh:
-            fault_mesh_list = load_text(os.path.join(self.data_dir, "..", "{}_faults.txt".format(self.split)))
-            fault_mesh_list = [int(x) for x in fault_mesh_list]
-            for x in fault_mesh_list:
-                self.correction_factors[x] = -1
-        
+
+        if True :
+            
+            if "remeshing_iso" in data_dir: 
+                self.simplified_data_list = self.data_list                
+            else :                               
+                self.simplified_data_list = [file_name.replace(
+                    ".off", "_SMPLER.obj") for file_name in self.data_list if file_name[-4::]==".off"]
+
+            self.points_list = [file_name.replace(".off", "POINTS.pkl") for file_name in self.data_list if file_name[-4::] == ".off"]
+            # Sorting
+            self.data_list, self.simplified_data_list, self.y, self.points_list = sort_jointly(
+                [self.data_list, self.simplified_data_list, self.y, self.points_list], dim=0)
+            if self.is_rotated:
+                df = pd.read_csv(os.path.join(self.data_dir,"..", "rotated_modelnet_{}.csv".format(self.split)), sep=",")
+                self.rotations_list = [df[df.mesh_path.isin([x])].to_dict("list") for x in self.data_list]
+            
+            self.correction_factors = [1]*len(self.data_list)
+            if self.cleaned_mesh:
+                fault_mesh_list = load_text(os.path.join(self.data_dir, "..", "{}_faults.txt".format(self.split)))
+                fault_mesh_list = [int(x) for x in fault_mesh_list]
+                for x in fault_mesh_list:
+                    self.correction_factors[x] = -1
+            
             # print("@@@@@@@@@@@", self.rotations_list[0], self.data_list[0])
 
 
