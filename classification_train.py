@@ -44,6 +44,7 @@ print(f"📁​ Data directory used: {data_dir}\n")
 # Number of samples to load per class (for faster experimentation)
 samples_per_class_train = None  # Adjust this number as needed
 samples_per_class_test = None # Adjust this number as needed
+########################################################################################## DATA
 
 ## Data loading
 dset_train = ModelNet40(data_dir=data_dir, split='train', samples_per_class=samples_per_class_train, category=category)
@@ -74,7 +75,9 @@ if True :
     mvnetwork = MVNetwork(num_classes=len(dset_train.classes), num_parts=None, mode='cls', net_name='resnet18').cuda()
 
     # Create backbone optimizer
-    optimizer = torch.optim.AdamW(mvnetwork.parameters(), lr=0.001, weight_decay=0.01)
+    weight_decay = 0.01  # Adjust weight decay as needed
+    lr_opti = 0.001
+    optimizer = torch.optim.AdamW(mvnetwork.parameters(), lr=lr_opti, weight_decay=weight_decay)
 
     # Create view selector
     views_config = "learned_spherical"
@@ -82,7 +85,8 @@ if True :
     print(f"🔍​ View selector configuration: {views_config} with {nb_views} views")
 
     # Create optimizer for view selector (In case views are not fixed, otherwise set to None)
-    mvtn_optimizer = torch.optim.AdamW(mvtn.parameters(), lr=0.0001, weight_decay=0.01)
+    lr_mvtn_optimizer = 0.0001
+    mvtn_optimizer = torch.optim.AdamW(mvtn.parameters(), lr=lr_mvtn_optimizer, weight_decay=weight_decay)
     #mvtn_optimizer = None
 
     # Create multi-view renderer
@@ -118,8 +122,9 @@ training_info = {
     'folder_name': f'results_{current_time}',
     'nb_views': nb_views,
     'epochs': epochs,
-    'learning_rate': 0.00001,
-    'weight_decay': 0.03,
+    'lr_opti': lr_opti,
+    'lr_mvtn_optimizer': lr_mvtn_optimizer,
+    'weight_decay': weight_decay,
     'batch_size': bs,
     'train_losses': [],
     'train_accuracies': [],
