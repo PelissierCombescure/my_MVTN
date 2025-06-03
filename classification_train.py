@@ -1,6 +1,6 @@
 import sys
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import tqdm
 import time 
 import json
@@ -20,18 +20,19 @@ from mvtorch.mvrenderer import MVRenderer
 
 from utils import *
 
-# CUDA_VISIBLE_DEVICES=1 python3 classification_train.py -nb_views 2 -epochs 100 -batch_size 16 - category all
+# CUDA_VISIBLE_DEVICES=1 python3 classification_train.py -nb_views 2 -epochs 100 -batch_size 16 -category all
 
 
 parser = argparse.ArgumentParser(description='Train a multi-view network for classification.')
 parser.add_argument('-nb_views', '--nb_views', type=int, required=True, help='Number of views')
 parser.add_argument('-epochs', '--epochs', default=100, type=int, required=True, help='Number of epochs')
-parser.add_argument('-batch_size', '--batch_size', default=16, type=int, required=True, help='Batch size')
+parser.add_argument('-batch_size', '--batch_size', default=1, type=int, required=True, help='Batch size')
 parser.add_argument('-category', '--category',  type=str)
 args = parser.parse_args()
 nb_views = args.nb_views
 epochs = args.epochs
 bs = args.batch_size
+print(f"🔧​ Training configuration: {nb_views} views, {epochs} epochs, batch size {bs}")
 category = args.category
 
 ########################################################################################## DATA
@@ -42,6 +43,8 @@ Papier_inter3_dir = os.path.abspath(os.path.join(current_dir, "../../"))
 Dataset_dir = Papier_inter3_dir+"/Dataset/"
 results_dir = current_dir+"/results/train/"
 
+print(f"📂​ Current directory: {current_dir}")
+
 data_dir= Dataset_dir+'ModelNet40'
 #data_dir = Dataset_dir+"ModelNet40_remeshing_iso"
 print(f"📁​ Data directory: {data_dir}\n")
@@ -50,8 +53,8 @@ epochs = args.epochs
 bs = args.batch_size
 
 # Number of samples to load per class (for faster experimentation)
-samples_per_class_train = 200  # Adjust this number as needed
-samples_per_class_test = 50 # Adjust this number as needed
+samples_per_class_train = None  # Adjust this number as needed
+samples_per_class_test = None # Adjust this number as needed
 
 ## Data loading
 dset_train = ModelNet40(data_dir=data_dir, split='train', samples_per_class=samples_per_class_train, category=category)
@@ -82,16 +85,16 @@ if True :
     mvnetwork = MVNetwork(num_classes=len(dset_train.classes), num_parts=None, mode='cls', net_name='resnet18').cuda()
 
     # Create backbone optimizer
-    optimizer = torch.optim.AdamW(mvnetwork.parameters(), lr=0.00001, weight_decay=0.03)
+    optimizer = torch.optim.AdamW(mvnetwork.parameters(), lr=0.001, weight_decay=0.01)
 
     # Create view selector
-    views_config = "circular"
+    views_config = "learned_spherical"
     mvtn = MVTN(nb_views, views_config).cuda()
     print(f"🔍​ View selector configuration: {views_config} with {nb_views} views")
 
     # Create optimizer for view selector (In case views are not fixed, otherwise set to None)
-    #mvtn_optimizer = torch.optim.AdamW(mvtn.parameters(), lr=0.0001, weight_decay=0.01)
-    mvtn_optimizer = None
+    mvtn_optimizer = torch.optim.AdamW(mvtn.parameters(), lr=0.0001, weight_decay=0.01)
+    #mvtn_optimizer = None
 
     # Create multi-view renderer
     mvrenderer = MVRenderer(nb_views=nb_views, return_mapping=False)
@@ -147,8 +150,7 @@ for epoch in range(epochs):
     
     train_pbar = tqdm.tqdm(total=len(train_loader), desc=f"Training")
     
-    for i, (targets, meshes, points) in enumerate(train_loader):  
-        print(points.shape)    
+    for i, (targets, meshes, points) in enumerate(train_loader):     
         azim, elev, dist = mvtn(points, c_batch_size=len(targets))
         rendered_images, _ = mvrenderer(meshes, points, azim=azim, elev=elev, dist=dist)
         outputs = mvnetwork(rendered_images)[0]
