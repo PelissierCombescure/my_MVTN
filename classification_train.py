@@ -28,6 +28,8 @@ parser.add_argument('-nb_views', '--nb_views', type=int, required=True, help='Nu
 parser.add_argument('-epochs', '--epochs', default=100, type=int, required=True, help='Number of epochs')
 parser.add_argument('-batch_size', '--batch_size', default=1, type=int, required=True, help='Batch size')
 parser.add_argument('-category', '--category',  type=str)
+parser.add_argument('--data_dir', required=True,  help='path to 3D dataset')
+
 args = parser.parse_args()
 nb_views = args.nb_views
 epochs = args.epochs
@@ -111,7 +113,7 @@ os.makedirs(results_dir_current, exist_ok=True)
 os.makedirs(os.path.join(results_dir_current, "best"), exist_ok=True)
 #os.makedirs(results_dir_current+"/by_epoch", exist_ok=True)
 print(f"\n📁​ Results directory: {results_dir_current}")
-path_model_configs = '/home/mpelissi/MVTN/my_MVTN/results/model_config.csv'
+#path_model_configs = '/home/mpelissi/MVTN/my_MVTN/results/model_config.csv'
 
 
 # Variables to track the best accuracy
@@ -264,7 +266,7 @@ for epoch in range(epochs):
     plt.close()
 
 # update model_configs.csv
-model_config = pd.read_csv('/home/mpelissi/MVTN/my_MVTN/results/train/model_config.csv')
+model_config = pd.read_csv('model_config.csv')
 # Define new row data as a dictionary
 new_row = {
     'Name': 'init-git',
