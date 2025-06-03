@@ -24,7 +24,9 @@ class MVNetwork(torch.nn.Module):
                 self.feat_dim = depth_to_feat_dim[self.net_name[6:]]
                 
                 #network = torch.hub.load('pytorch/vision:v0.8.2', self.net_name, pretrained=self.pretraining)
-                network = models.resnet18(pretrained=self.pretraining)
+                network = models.resnet18(pretrained=False) 
+                state_dict = torch.load('checkpoint/resnet18-5c106cde.pth')
+                network.load_state_dict(state_dict)
                 network.fc = torch.nn.Sequential()
 
                 self.mvnetwork = MVAggregate(
