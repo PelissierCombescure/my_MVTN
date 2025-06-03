@@ -9,6 +9,7 @@ from datetime import datetime
 import subprocess
 import argparse
 import pandas as pd
+import shutil
 
 import torch
 print("CUDA available: ", torch.cuda.is_available())
@@ -20,7 +21,7 @@ from mvtorch.mvrenderer import MVRenderer
 
 from utils import *
 
-# CUDA_VISIBLE_DEVICES=1 python3 classification_train.py -nb_views 2 -epochs 100 -batch_size 16 -category all --data_dir /home/mpelissi/Dataset/ModelNet40/
+# CUDA_VISIBLE_DEVICES=1 python3 classification_train.py -nb_views 2 -epochs 100 -batch_size 16 -category all -data_dir /home/mpelissi/Dataset/ModelNet40/
 
 
 parser = argparse.ArgumentParser(description='Train a multi-view network for classification.')
@@ -28,7 +29,7 @@ parser.add_argument('-nb_views', '--nb_views', type=int, required=True, help='Nu
 parser.add_argument('-epochs', '--epochs', default=100, type=int, required=True, help='Number of epochs')
 parser.add_argument('-batch_size', '--batch_size', default=1, type=int, required=True, help='Batch size')
 parser.add_argument('-category', '--category',  type=str)
-parser.add_argument('--data_dir', required=True,  help='path to 3D dataset')
+parser.add_argument('-data_dir', '--data_dir', required=True,  help='path to 3D dataset')
 
 args = parser.parse_args()
 nb_views = args.nb_views
@@ -94,7 +95,7 @@ if True :
 ## Training
 # Create a directory with the current date and time
 current_time = datetime.now().strftime("%d-%m_%Hh%Mm%S")
-results_dir_current = os.path.join("/results/train/", f'results_{current_time}')
+results_dir_current = os.path.join("results/train/", f'results_{current_time}')
 os.makedirs(results_dir_current, exist_ok=True)
 os.makedirs(os.path.join(results_dir_current, "best"), exist_ok=True)
 #os.makedirs(results_dir_current+"/by_epoch", exist_ok=True)
@@ -250,6 +251,10 @@ for epoch in range(epochs):
     plt.tight_layout()
     plt.savefig(os.path.join(results_dir_current, 'training_curves.png'))
     plt.close()
+    
+    # Move logs file
+    shutil.copy("logs.out", os.path.join(results_dir_current, 'logs.out'))
+    shutil.copy("logs.err", os.path.join(results_dir_current, 'logs.err'))
 
 # update model_configs.csv
 model_config = pd.read_csv('model_config.csv')
