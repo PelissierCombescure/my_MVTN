@@ -3,5 +3,5 @@ mvtorch/__pycache__/
 # Ignore all .pycatch folders
 **/__pycache__/
 
-results/train/*/best
-results/old
+
+results/
