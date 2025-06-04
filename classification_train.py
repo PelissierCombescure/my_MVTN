@@ -30,6 +30,7 @@ parser.add_argument('-epochs', '--epochs', default=100, type=int, required=True,
 parser.add_argument('-batch_size', '--batch_size', default=1, type=int, required=True, help='Batch size')
 parser.add_argument('-category', '--category',  type=str)
 parser.add_argument('-data_dir', '--data_dir', required=True,  help='path to 3D dataset')
+parser.add_argument('-log_suffix', '--log_suffix', required=True, type=str, help='Pour copier les bns logs')
 
 args = parser.parse_args()
 nb_views = args.nb_views
@@ -37,6 +38,7 @@ epochs = args.epochs
 bs = args.batch_size
 data_dir = args.data_dir
 category = args.category
+log_suffix = args.log_suffix
 print(f"🔧​ Training configuration: {nb_views} views, {epochs} epochs, batch size {bs}")
 print(f"📁​ Data directory used: {data_dir}\n")
 
@@ -77,6 +79,7 @@ if True :
     # Create backbone optimizer
     weight_decay = 0.01  # Adjust weight decay as needed
     lr_opti = 0.001
+    print('>>>>',mvnetwork.parameters())
     optimizer = torch.optim.AdamW(mvnetwork.parameters(), lr=lr_opti, weight_decay=weight_decay)
 
     # Create view selector
@@ -258,8 +261,9 @@ for epoch in range(epochs):
     plt.close()
     
     # Move logs file
-    shutil.copy("logs.out", os.path.join(results_dir_current, 'logs.out'))
-    shutil.copy("logs.err", os.path.join(results_dir_current, 'logs.err'))
+    shutil.copy("logs.out", os.path.join(results_dir_current, 'logs-'+log_suffix+'.out'))
+    shutil.copy("logs.err", os.path.join(results_dir_current, 'logs-'+log_suffix+'.err'))
+
 
 # update model_configs.csv
 model_config = pd.read_csv('model_config.csv')
