@@ -22,7 +22,8 @@ from earlyStop import EarlyStopping
 
 from utils import *
 
-# CUDA_VISIBLE_DEVICES=1 python3 classification_train.py -nb_views 2 -epochs 100 -batch_size 16 -category all -data_dir /home/mpelissi/Dataset/ModelNet40/
+# CUDA_VISIBLE_DEVICES=1 python3 classification_train.py -nb_views 2 -epochs 100 -batch_size 16 -category all -data_dir /home/mpelissi/Dataset/ModelNet40/ -log_suffix circular -view_config spherical
+
 
 
 parser = argparse.ArgumentParser(description='Train a multi-view network for classification.')
@@ -80,9 +81,8 @@ if True :
     mvnetwork = MVNetwork(num_classes=len(dset_train.classes), num_parts=None, mode='cls', net_name='resnet18').cuda()
 
     # Create backbone optimizer
-    weight_decay = 0.01  # Adjust weight decay as needed
-    lr_opti = 0.001
-    print('>>>>',mvnetwork.parameters())
+    weight_decay = 0.03  # Adjust weight decay as needed
+    lr_opti = 0.00001
     optimizer = torch.optim.AdamW(mvnetwork.parameters(), lr=lr_opti, weight_decay=weight_decay)
 
     # Create view selector
