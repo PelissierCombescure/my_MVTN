@@ -18,6 +18,7 @@ from mvtorch.data import ScanObjectNN, CustomDataLoader, ModelNet40
 from mvtorch.networks import MVNetwork
 from mvtorch.view_selector import MVTN
 from mvtorch.mvrenderer import MVRenderer
+from earlyStop import EarlyStopping
 
 from utils import *
 
@@ -31,6 +32,7 @@ parser.add_argument('-batch_size', '--batch_size', default=1, type=int, required
 parser.add_argument('-category', '--category',  type=str)
 parser.add_argument('-data_dir', '--data_dir', required=True,  help='path to 3D dataset')
 parser.add_argument('-log_suffix', '--log_suffix', required=True, type=str, help='Pour copier les bns logs')
+parser.add_argument('-view_config', '--view_config', required=True, type=str)
 
 args = parser.parse_args()
 nb_views = args.nb_views
@@ -39,6 +41,7 @@ bs = args.batch_size
 data_dir = args.data_dir
 category = args.category
 log_suffix = args.log_suffix
+views_config = args.view_config
 print(f"🔧​ Training configuration: {nb_views} views, {epochs} epochs, batch size {bs}")
 print(f"📁​ Data directory used: {data_dir}\n")
 
@@ -83,20 +86,27 @@ if True :
     optimizer = torch.optim.AdamW(mvnetwork.parameters(), lr=lr_opti, weight_decay=weight_decay)
 
     # Create view selector
-    views_config = "learned_spherical"
     mvtn = MVTN(nb_views, views_config).cuda()
     print(f"🔍​ View selector configuration: {views_config} with {nb_views} views")
 
     # Create optimizer for view selector (In case views are not fixed, otherwise set to None)
-    lr_mvtn_optimizer = 0.0001
-    mvtn_optimizer = torch.optim.AdamW(mvtn.parameters(), lr=lr_mvtn_optimizer, weight_decay=weight_decay)
-    #mvtn_optimizer = None
-
+    if 'learned' in views_config:
+        print("Using learned view selector")
+        lr_mvtn_optimizer = 0.0001
+        mvtn_optimizer = torch.optim.AdamW(mvtn.parameters(), lr=lr_mvtn_optimizer, weight_decay=weight_decay)
+        opti_mvtn = 'setup'
+    else :
+        print("mvtn_optimizer is None !!!!!")
+        mvtn_optimizer = None
+        opti_mvtn = None
+        lr_mvtn_optimizer = None         
+ 
     # Create multi-view renderer
     mvrenderer = MVRenderer(nb_views=nb_views, return_mapping=False)
-
     # Create loss function for training
     criterion = torch.nn.CrossEntropyLoss()
+    # Create early stopping mechanism
+    early_stopping = EarlyStopping(patience=5, min_delta=0.01)
 
 ##########################################################################################
 ## Training
@@ -125,6 +135,8 @@ training_info = {
     'folder_name': f'results_{current_time}',
     'nb_views': nb_views,
     'epochs': epochs,
+    'views_config': views_config,
+    'opti_mvtn' : opti_mvtn,
     'lr_opti': lr_opti,
     'lr_mvtn_optimizer': lr_mvtn_optimizer,
     'weight_decay': weight_decay,
@@ -205,6 +217,12 @@ for epoch in range(epochs):
     avg_test_accuracy = 100.0 * correct_test / len(dset_test)
     test_losses.append(avg_test_loss)
     test_accuracies.append(avg_test_accuracy)
+    # Early stopping check
+    early_stopping(avg_test_loss)
+
+    if early_stopping.early_stop:
+        print("🚨 Early stopping triggered.")
+        break
         
     print(f"🔍​ Testing - Final Loss: {avg_test_loss:.5f}, Final Accuracy: {avg_test_accuracy:.2f}%")
     

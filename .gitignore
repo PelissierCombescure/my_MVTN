@@ -5,4 +5,4 @@ mvtorch/__pycache__/
 
 
 results/*
-logs.*
+logs*
