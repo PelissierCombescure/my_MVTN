@@ -24,3 +24,5 @@ class EarlyStopping:
             self.counter += 1
             if self.counter >= self.patience:
                 self.early_stop = True
+
+        print(f"⚠️​ EarlyStopping counter: {self.counter} out of {self.patience}, Best Loss: {self.best_loss:.4f}, Current Loss: {val_loss:.4f}")

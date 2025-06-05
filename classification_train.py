@@ -13,6 +13,8 @@ import shutil
 
 import torch
 print("CUDA available: ", torch.cuda.is_available())
+gpu_name = torch.cuda.get_device_name(0)
+print("GPU name: ", gpu_name)
 
 from mvtorch.data import ScanObjectNN, CustomDataLoader, ModelNet40
 from mvtorch.networks import MVNetwork
@@ -23,7 +25,6 @@ from earlyStop import EarlyStopping
 from utils import *
 
 # CUDA_VISIBLE_DEVICES=1 python3 classification_train.py -nb_views 2 -epochs 100 -batch_size 16 -category all -data_dir /home/mpelissi/Dataset/ModelNet40/ -log_suffix circular -view_config spherical
-
 
 
 parser = argparse.ArgumentParser(description='Train a multi-view network for classification.')
@@ -106,12 +107,13 @@ if True :
     # Create loss function for training
     criterion = torch.nn.CrossEntropyLoss()
     # Create early stopping mechanism
-    early_stopping = EarlyStopping(patience=5, min_delta=0.01)
+    patience = 10; min_delta = 0.001
+    early_stopping = EarlyStopping(patience=patience, min_delta=min_delta)
 
 ##########################################################################################
 ## Training
 # Create a directory with the current date and time
-current_time = datetime.now().strftime("%d-%m_%Hh%Mm%S")
+current_time = datetime.now().strftime("%m-%d_%Hh%Mm%S")
 results_dir_current = os.path.join("results/train/", f'results_{current_time}')
 os.makedirs(results_dir_current, exist_ok=True)
 os.makedirs(os.path.join(results_dir_current, "best"), exist_ok=True)
@@ -132,9 +134,16 @@ test_accuracies = []
 
 # Dictionary to store training parameters and results
 training_info = {
+    'gpu_name': gpu_name,
     'folder_name': f'results_{current_time}',
     'nb_views': nb_views,
     'epochs': epochs,
+    'patience': patience,
+    'min_delta': min_delta,
+    'data_dir': data_dir,
+    'category': category,
+    'log_suffix': log_suffix,
+    'epoch_earlystop': None,
     'views_config': views_config,
     'opti_mvtn' : opti_mvtn,
     'lr_opti': lr_opti,
@@ -218,12 +227,7 @@ for epoch in range(epochs):
     test_losses.append(avg_test_loss)
     test_accuracies.append(avg_test_accuracy)
     # Early stopping check
-    early_stopping(avg_test_loss)
-
-    if early_stopping.early_stop:
-        print("🚨 Early stopping triggered.")
-        break
-        
+            
     print(f"🔍​ Testing - Final Loss: {avg_test_loss:.5f}, Final Accuracy: {avg_test_accuracy:.2f}%")
     
     # Save best models if we achieve better accuracy
@@ -281,6 +285,13 @@ for epoch in range(epochs):
     # Move logs file
     shutil.copy("logs.out", os.path.join(results_dir_current, 'logs-'+log_suffix+'.out'))
     shutil.copy("logs.err", os.path.join(results_dir_current, 'logs-'+log_suffix+'.err'))
+    
+    # Early stopping check
+    early_stopping(avg_test_loss)
+    if early_stopping.early_stop:
+        print("🚨 Early stopping triggered.")
+        training_info['epoch_earlystop'] = epoch + 1
+        break
 
 
 # update model_configs.csv
