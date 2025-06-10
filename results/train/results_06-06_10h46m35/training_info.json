@@ -8,7 +8,7 @@
     "data_dir": "/projects/reva/mpelissi/Dataset/ModelNet40",
     "category": "all",
     "log_suffix": "circular-20",
-    "epoch_earlystop": null,
+    "epoch_earlystop": 28,
     "views_config": "circular",
     "opti_mvtn": null,
     "lr_opti": 1e-05,
