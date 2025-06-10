@@ -1,4 +1,5 @@
 {
+    "gpu_name": "Quadro RTX 5000",
     "folder_name": "results_04-06_15h26m23",
     "nb_views": 12,
     "epochs": 50,
@@ -7,6 +8,7 @@
     "data_dir": "/home/mpelissi/Dataset/ModelNet40/",
     "category": "all",
     "log_suffix": "circular",
+    "epoch_earlystop": 16,
     "views_config": "circular",
     "opti_mvtn": null,
     "lr_opti": 1e-05,

@@ -26,6 +26,10 @@ from utils import *
 
 # CUDA_VISIBLE_DEVICES=1 python3 classification_train.py -nb_views 2 -epochs 100 -batch_size 16 -category all -data_dir /home/mpelissi/Dataset/ModelNet40/ -log_suffix circular -view_config spherical
 
+#################################
+# FAIRE ENREGISTREMENT DU JSON DANS LE EARLYSTOP CAR SINON EPOCH_EARLY == NULL
+#################################
+
 
 parser = argparse.ArgumentParser(description='Train a multi-view network for classification.')
 parser.add_argument('-nb_views', '--nb_views', type=int, required=True, help='Number of views')
@@ -291,6 +295,9 @@ for epoch in range(epochs):
     if early_stopping.early_stop:
         print("🚨 Early stopping triggered.")
         training_info['epoch_earlystop'] = epoch + 1
+        # si early stop : update 
+        with open(os.path.join(results_dir_current, 'training_info.json'), 'w') as f:
+            json.dump(training_info, f, indent=4)
         break
 
 

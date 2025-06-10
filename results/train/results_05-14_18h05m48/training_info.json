@@ -1,4 +1,5 @@
 {
+    "gpu_name": "Quadro RTX 5000",
     "folder_name": "results_14-05_18h05m48",
     "nb_views": 8,
     "epochs": 100,
