@@ -47,53 +47,6 @@ def  rotation_matrix(axis, theta, in_degrees=True):
     return np.array([[aa + bb - cc - dd, 2 * (bc + ad), 2 * (bd - ac)],
                      [2 * (bc - ad), aa + cc - bb - dd, 2 * (cd + ab)],
                      [2 * (bd + ac), 2 * (cd - ab), aa + dd - bb - cc]])
-# class MultiViewDataSet(Dataset):
-
-#     def find_classes(self, dir):
-#         classes = [d for d in os.listdir(dir) if os.path.isdir(os.path.join(dir, d))]
-#         classes.sort()
-#         class_to_idx = {classes[i]: i for i in range(len(classes))}
-
-#         return classes, class_to_idx
-
-#     def __init__(self, root, split, transform=None, target_transform=None):
-#         self.x = []
-#         self.y = []
-#         self.root = root
-
-#         self.classes, self.class_to_idx = self.find_classes(root)
-
-#         self.transform = transform
-#         self.target_transform = target_transform
-
-#         # root / <label>  / <train/test> / <item> / <view>.png
-#         for label in os.listdir(root): # Label
-#             for item in os.listdir(root + '/' + label + '/' + split):
-#                 views = []
-#                 for view in os.listdir(root + '/' + label + '/' + split + '/' + item):
-#                     views.append(root + '/' + label + '/' + split + '/' + item + '/' + view)
-
-#                 self.x.append(views)
-#                 self.y.append(self.class_to_idx[label])
-
-#     # Override to give PyTorch access to any image on the dataset
-#     def __getitem__(self, index):
-#         orginal_views = self.x[index]
-#         views = []
-
-#         for view in orginal_views:
-#             im = Image.open(view)
-#             im = im.convert('RGB')
-#             if self.transform is not None:
-#                 im = self.transform(im)
-#             views.append(im)
-
-#         return views, self.y[index]
-
-#     # Override to give PyTorch size of dataset
-#     def __len__(self):
-#         return len(self.x)
-
 
 class ModelNet40(Dataset):
 
@@ -177,20 +130,9 @@ class ModelNet40(Dataset):
 
     # Override to give PyTorch access to any image on the dataset
     def __getitem__(self, index):
-        # orginal_views = self.x[index]
-        # views = []
-
-        # for view in orginal_views:
-        #     im = Image.open(view)
-        #     im = im.convert('RGB')
-        #     if self.transform is not None:
-        #         im = self.transform(im)
-        #     views.append(im)
         if not self.simplified_mesh :
             threeobject = trimesh.load(self.data_list[index])
-            # threeobject = read_off(self.data_list[index])
-            # verts = threeobject.pos.numpy()
-            # faces = threeobject.face.transpose(0, 1).numpy()
+
         else:
             threeobject = trimesh.load(self.simplified_data_list[index])
         
@@ -213,10 +155,6 @@ class ModelNet40(Dataset):
             verts).to(torch.float), p=self.dset_norm)
         faces = torch.from_numpy(faces)
 
-        # if True:
-        #     faces[ :, 1], faces[ :, 2] = faces[ :, 2], faces[ :, 1]
-
-
 
         # Initialize each vertex to be white in color.
         verts_rgb = torch.ones_like(verts)[None]  # (1, V, 3)
@@ -234,25 +172,9 @@ class ModelNet40(Dataset):
                 points = load_obj(self.points_list[index])
             points = torch.from_numpy(rotation_matrix(rot_axis, angle).dot(points.T).T).to(torch.float)
             points = torch_center_and_normalize(points, p=self.dset_norm)
-            # if self.split =="train":
-            #     points = torch_augment_pointcloud(points)
-        return self.y[index], mesh, points #, self.correction_factors[index]
-        # elif self.return_extracted_features:
-        #     features = load_obj(self.extracted_features_list[index])
-        #     if self.features_type == "logits_trans":
-        #         features = np.concatenate((features["logits"].reshape(-1), features["transform_matrix"].reshape(-1)),0)
-        #     elif self.features_type == "post_max_trans":
-        #         features = np.concatenate(
-        #             (features["post_max"].reshape(-1), features["transform_matrix"].reshape(-1)), 0)
-        #     else :
-        #         features = features[self.features_type].reshape(-1)
 
-        #     # if self.split =="train":
-        #     #     points = torch_augment_pointcloud(points)
-        #     # print(features[self.features_type].shape)
-        #     return self.y[index], mesh, features, self.correction_factors[index]
-        # else :
-        #     return self.y[index], mesh, None #, self.correction_factors[index]
+        return self.y[index], mesh, points, self.simplified_data_list[index]
+       
 
     # Override to give PyTorch size of dataset
     def __len__(self):

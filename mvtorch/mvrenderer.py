@@ -41,7 +41,7 @@ class MVRenderer(nn.Module):
         an MVTN object that can render multiple views according to predefined setup
     """
 
-    def __init__(self, nb_views, image_size=224, pc_rendering=True, object_color="white", background_color="black", faces_per_pixel=1, points_radius=0.006,  points_per_pixel=1, light_direction="random", cull_backfaces=False, return_mapping=True):
+    def __init__(self, nb_views, pc_rendering, image_size=224, object_color="white", background_color="black", faces_per_pixel=1, points_radius=0.006,  points_per_pixel=1, light_direction="random", cull_backfaces=False, return_mapping=True):
         super().__init__()
         self.nb_views = nb_views
         self.image_size = image_size
@@ -86,10 +86,8 @@ class MVRenderer(nn.Module):
             cull_backfaces=self.cull_backfaces,
         )
         renderer = MeshRenderer(
-            rasterizer=MeshRasterizer(
-                cameras=camera, raster_settings=raster_settings),
-            shader=HardPhongShader(blend_params=BlendParams(background_color=background_color
-                                                            ), device=lights.device, cameras=camera, lights=lights)
+            rasterizer=MeshRasterizer(cameras=camera, raster_settings=raster_settings),
+            shader=HardPhongShader(blend_params=BlendParams(background_color=background_color), device=lights.device, cameras=camera, lights=lights)
         )
         new_meshes = new_meshes.extend(self.nb_views)
 
@@ -192,6 +190,7 @@ class MVRenderer(nn.Module):
         else:
             rendered_images, indxs, weights, cameras = self.render_points(
                 points=points, color=color, azim=azim, elev=elev, dist=dist, background_color=background_color)
+            
         if self.return_mapping:
             return rendered_images, indxs, weights, cameras
         else :

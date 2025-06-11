@@ -8,7 +8,7 @@ from .utils import unit_spherical_grid, batch_tensor, class_freq_to_weight, labe
 from .ops import mvctosvc, svctomvc, batched_index_select_parts
 from .models.pointnet import *
 from torch import nn
-from einops import rearrange
+#from einops import rearrange
 
 
 

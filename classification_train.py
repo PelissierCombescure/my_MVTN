@@ -22,7 +22,7 @@ from mvtorch.view_selector import MVTN
 from mvtorch.mvrenderer import MVRenderer
 from earlyStop import EarlyStopping
 
-from utils import *
+from utils_mvtn import *
 
 # CUDA_VISIBLE_DEVICES=1 python3 classification_train.py -nb_views 2 -epochs 100 -batch_size 16 -category all -data_dir /home/mpelissi/Dataset/ModelNet40/ -log_suffix circular -view_config spherical
 
@@ -107,7 +107,12 @@ if True :
         lr_mvtn_optimizer = None         
  
     # Create multi-view renderer
-    mvrenderer = MVRenderer(nb_views=nb_views, return_mapping=False)
+    pc_rendering = False
+    if pc_rendering:
+        print("Using point cloud rendering")
+    else:
+        print("Using mesh rendering")
+    mvrenderer = MVRenderer(nb_views=nb_views, return_mapping=False, pc_rendering=pc_rendering).cuda()
     # Create loss function for training
     criterion = torch.nn.CrossEntropyLoss()
     # Create early stopping mechanism
@@ -154,6 +159,7 @@ training_info = {
     'lr_mvtn_optimizer': lr_mvtn_optimizer,
     'weight_decay': weight_decay,
     'batch_size': bs,
+    'pc_rendering': pc_rendering,
     'train_losses': [],
     'train_accuracies': [],
     'test_losses': [],
@@ -172,7 +178,7 @@ for epoch in range(epochs):
     
     train_pbar = tqdm.tqdm(total=len(train_loader), desc=f"Training")
     
-    for i, (targets, meshes, points) in enumerate(train_loader):     
+    for i, (targets, meshes, points, names) in enumerate(train_loader):     
         azim, elev, dist = mvtn(points, c_batch_size=len(targets))
         rendered_images, _ = mvrenderer(meshes, points, azim=azim, elev=elev, dist=dist)
         outputs = mvnetwork(rendered_images)[0]
@@ -209,7 +215,7 @@ for epoch in range(epochs):
     
     test_pbar = tqdm.tqdm(total=len(test_loader), desc=f"Testing")
     
-    for i, (targets, meshes, points) in enumerate(test_loader):
+    for i, (targets, meshes, points, names) in enumerate(test_loader):
         with torch.no_grad():
             azim, elev, dist = mvtn(points, c_batch_size=len(targets))
             rendered_images, _ = mvrenderer(meshes, points, azim=azim, elev=elev, dist=dist)
