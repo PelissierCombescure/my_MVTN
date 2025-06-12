@@ -1,2 +1,9 @@
 gpu_name,folder_name,nb_views,epochs,patience,min_delta,data_dir,category,log_suffix,epoch_earlystop,views_config,opti_mvtn,lr_opti,lr_mvtn_optimizer,weight_decay,batch_size,best_accuracy,best_epoch,pc_rendering
 Quadro RTX 6000,results_06-06_10h45m03,20,50,10,0.001,/projects/reva/mpelissi/Dataset/ModelNet40,all,spherical-20,39,spherical,None,1e-05,None,0.03,16,90.80226904376013,29,True
+Quadro RTX 5000,results_06-05_11h39m05,12,50,10,0.001,/home/mpelissi/Dataset/ModelNet40/,all,circular,33,circular,None,1e-05,None,0.03,16,89.50567260940032,30,True
+Quadro RTX 5000,results_06-05_11h47m48,12,50,10,0.001,/home/mpelissi/Dataset/ModelNet40/,all,spherical,30,spherical,None,1e-05,None,0.03,16,91.12641815235008,20,True
+Quadro RTX 5000,results_06-04_15h26m23,12,50,5,0.01,/home/mpelissi/Dataset/ModelNet40/,all,circular,16,circular,None,1e-05,None,0.03,16,89.05996758508914,14,True
+Quadro RTX 8000,results_06-06_10h46m35,20,50,10,0.001,/projects/reva/mpelissi/Dataset/ModelNet40,all,circular-20,28,circular,None,1e-05,None,0.03,16,89.22204213938411,19,True
+Quadro RTX 6000,results_06-05_17h13m24,12,50,10,0.001,/projects/reva/mpelissi/Dataset/ModelNet40,all,random,50,random,None,1e-05,None,0.03,16,89.6677471636953,42,True
+Quadro RTX 5000,results_05-19_18h20m13,1,100,None,None,/home/mpelissi/Dataset/ModelNet40/,all,circular,not saved,circular,not saved,not saved,not saved,0.03,16,86.58833063209076,44,True
+Quadro RTX 5000,results_05-14_18h05m48,8,100,None,None,/home/mpelissi/Dataset/ModelNet40/,all,circular,not saved,circular,not saved,not saved,not saved,0.03,16,89.54619124797406,28,True

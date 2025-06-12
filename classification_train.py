@@ -101,7 +101,8 @@ if True :
     optimizer = torch.optim.AdamW(mvnetwork.parameters(), lr=lr_opti, weight_decay=weight_decay)
 
     # Create view selector
-    mvtn = MVTN(nb_views, views_config).cuda()
+    canonical_dist = 1.1 * 2  # Adjust canonical distance as needed
+    mvtn = MVTN(nb_views, views_config, canonical_distance=canonical_dist).cuda()
     print(f"🔍​ View selector configuration: {views_config} with {nb_views} views")
 
     # Create optimizer for view selector (In case views are not fixed, otherwise set to None)
@@ -169,6 +170,7 @@ training_info = {
     'weight_decay': weight_decay,
     'batch_size': bs,
     'pc_rendering': pc_rendering,
+    'canonical_dist': canonical_dist,
     'train_losses': [],
     'train_accuracies': [],
     'test_losses': [],
@@ -180,6 +182,7 @@ training_info = {
 ###############################################################################################
 for epoch in range(epochs):
     print(f"\n ➰​ Epoch {epoch + 1}/{epochs}")
+    torch.cuda.empty_cache()
     ############################################ Training
     mvnetwork.train(); mvtn.train(); mvrenderer.train()    
     running_loss = 0
