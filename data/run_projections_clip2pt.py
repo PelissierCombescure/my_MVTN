@@ -12,7 +12,7 @@ from matplotlib import cm
 from datetime import datetime 
 
 
-from functions_pov_clip2pt import *
+from data.functions_pov_mvtn import *
 
 # Get the absolute path of MYPOINTCLIP (two levels up)
 root_dir = os.path.abspath(os.path.join(os.getcwd(), ".."))

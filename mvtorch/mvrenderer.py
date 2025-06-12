@@ -55,14 +55,15 @@ class MVRenderer(nn.Module):
         self.cull_backfaces = cull_backfaces
         self.return_mapping = return_mapping
 
-    def render_meshes(self, meshes, color, azim, elev, dist, lights, background_color=(1.0, 1.0, 1.0), ):
+    def render_meshes(self, meshes, color, azim, elev, dist, lights, background_color=(1.0, 1.0, 1.0), projection = False):
         c_batch_size = len(meshes)
         verts = [msh.verts_list()[0].cuda() for msh in meshes]
         faces = [msh.faces_list()[0].cuda() for msh in meshes]
         new_meshes = Meshes(
             verts=verts,
             faces=faces,
-            textures=None)
+            textures=None
+            )
         max_vert = new_meshes.verts_padded().shape[1]
 
         new_meshes.textures = Textures(
@@ -76,8 +77,7 @@ class MVRenderer(nn.Module):
 
         cameras = OpenGLPerspectiveCameras(
             device="cuda:{}".format(torch.cuda.current_device()), R=R, T=T)
-        camera = OpenGLPerspectiveCameras(device="cuda:{}".format(torch.cuda.current_device()), R=R[None, 0, ...],
-                                        T=T[None, 0, ...])
+        camera = OpenGLPerspectiveCameras(device="cuda:{}".format(torch.cuda.current_device()), R=R[None, 0, ...], T=T[None, 0, ...])
 
         raster_settings = RasterizationSettings(
             image_size=self.image_size,
@@ -85,6 +85,7 @@ class MVRenderer(nn.Module):
             faces_per_pixel=self.faces_per_pixel,
             cull_backfaces=self.cull_backfaces,
         )
+        
         renderer = MeshRenderer(
             rasterizer=MeshRasterizer(cameras=camera, raster_settings=raster_settings),
             shader=HardPhongShader(blend_params=BlendParams(background_color=background_color), device=lights.device, cameras=camera, lights=lights)
@@ -97,7 +98,11 @@ class MVRenderer(nn.Module):
             rendered_images, batch_size=self.nb_views, dim=1, unsqueeze=True).transpose(0, 1)
 
         rendered_images = rendered_images[..., 0:3].transpose(2, 4).transpose(3, 4)
-        return rendered_images, cameras
+        
+        if projection:
+            return rendered_images, cameras, meshes, new_meshes, R, T
+        else:     
+            return rendered_images, cameras
 
     def render_points(self, points, color, azim, elev, dist, background_color=(0.0, 0.0, 0.0), ):
         point_cloud = Pointclouds(points=points.to(torch.float), features=color *
@@ -181,13 +186,11 @@ class MVRenderer(nn.Module):
         background_color = torch_color(self.background_color, self.background_color, max_lightness=True,).cuda()
         color = self.rendering_color(color)
 
-        if not self.pc_rendering:
-            lights = DirectionalLights(
-                device=background_color.device, direction=self.light_direction(azim, elev, dist))
+        if not self.pc_rendering: # Mesh rendering
+            lights = DirectionalLights(device=background_color.device, direction=self.light_direction(azim, elev, dist))
 
-            rendered_images, cameras = self.render_meshes(
-                meshes=meshes, color=color, azim=azim, elev=elev, dist=dist, lights=lights, background_color=background_color)
-        else:
+            rendered_images, cameras = self.render_meshes(meshes=meshes, color=color, azim=azim, elev=elev, dist=dist, lights=lights, background_color=background_color)
+        else: # Point cloud rendering
             rendered_images, indxs, weights, cameras = self.render_points(
                 points=points, color=color, azim=azim, elev=elev, dist=dist, background_color=background_color)
             

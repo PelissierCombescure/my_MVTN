@@ -26,11 +26,6 @@ from utils_mvtn import *
 
 # CUDA_VISIBLE_DEVICES=1 python3 classification_train.py -nb_views 2 -epochs 100 -batch_size 16 -category all -data_dir /home/mpelissi/Dataset/ModelNet40/ -log_suffix circular -view_config spherical
 
-#################################
-# FAIRE ENREGISTREMENT DU JSON DANS LE EARLYSTOP CAR SINON EPOCH_EARLY == NULL
-#################################
-
-
 parser = argparse.ArgumentParser(description='Train a multi-view network for classification.')
 parser.add_argument('-nb_views', '--nb_views', type=int, required=True, help='Number of views')
 parser.add_argument('-epochs', '--epochs', default=100, type=int, required=True, help='Number of epochs')
@@ -39,6 +34,9 @@ parser.add_argument('-category', '--category',  type=str)
 parser.add_argument('-data_dir', '--data_dir', required=True,  help='path to 3D dataset')
 parser.add_argument('-log_suffix', '--log_suffix', required=True, type=str, help='Pour copier les bns logs')
 parser.add_argument('-view_config', '--view_config', required=True, type=str)
+# Add the new arguments for rendering
+parser.add_argument('-pc_rendering', '--pc_rendering', action='store_true', help='Set pc_rendering to True (for point cloud rendering)')
+parser.add_argument('-mesh_rendering', '--mesh_rendering', action='store_true', help='Set pc_rendering to False (for mesh rendering)')
 
 args = parser.parse_args()
 nb_views = args.nb_views
@@ -48,8 +46,20 @@ data_dir = args.data_dir
 category = args.category
 log_suffix = args.log_suffix
 views_config = args.view_config
+
+pc_rendering = None
+if args.pc_rendering and args.mesh_rendering:
+    parser.error("You cannot provide both -pc_rendering and -mesh_rendering. Please choose one.")
+elif args.pc_rendering:
+    pc_rendering = True
+elif args.mesh_rendering:
+    pc_rendering = False
+else:
+    # Raise an error if neither is provided
+    parser.error("You must specify either -pc_rendering or -mesh_rendering.")
+
 print(f"🔧​ Training configuration: {nb_views} views, {epochs} epochs, batch size {bs}")
-print(f"📁​ Data directory used: {data_dir}\n")
+print(f"​ Data directory used: {data_dir}\n")
 
 ########################################################################################## DATA
 # Number of samples to load per class (for faster experimentation)
@@ -107,11 +117,10 @@ if True :
         lr_mvtn_optimizer = None         
  
     # Create multi-view renderer
-    pc_rendering = False
     if pc_rendering:
-        print("Using point cloud rendering")
+        print("\n 🚨 Using point cloud rendering")
     else:
-        print("Using mesh rendering")
+        print("\n 🚨 Using mesh rendering")
     mvrenderer = MVRenderer(nb_views=nb_views, return_mapping=False, pc_rendering=pc_rendering).cuda()
     # Create loss function for training
     criterion = torch.nn.CrossEntropyLoss()
