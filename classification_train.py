@@ -68,8 +68,9 @@ samples_per_class_test = None # Adjust this number as needed
 ########################################################################################## DATA
 
 ## Data loading
-dset_train = ModelNet40(data_dir=data_dir, split='train', samples_per_class=samples_per_class_train, category=category)
-dset_test = ModelNet40(data_dir=data_dir, split='test', samples_per_class=samples_per_class_test, category=category)
+simplified_mesh=True
+dset_train = ModelNet40(data_dir=data_dir, split='train', samples_per_class=samples_per_class_train, category=category, simplified_mesh=simplified_mesh)
+dset_test = ModelNet40(data_dir=data_dir, split='test', samples_per_class=samples_per_class_test, category=category, simplified_mesh=simplified_mesh)
 print(f"🔎​​​ Which categories are used ? 🚨​ {category} 🚨​\n")
 
 
@@ -133,7 +134,7 @@ if True :
 ## Training
 # Create a directory with the current date and time
 current_time = datetime.now().strftime("%m-%d_%Hh%Mm%S")
-results_dir_current = os.path.join("results/train/", f'results_{current_time}')
+results_dir_current = os.path.join("results/train/", f'results_{current_time}-{gpu_name}')
 os.makedirs(results_dir_current, exist_ok=True)
 os.makedirs(os.path.join(results_dir_current, "best"), exist_ok=True)
 #os.makedirs(results_dir_current+"/by_epoch", exist_ok=True)
@@ -171,6 +172,7 @@ training_info = {
     'batch_size': bs,
     'pc_rendering': pc_rendering,
     'canonical_dist': canonical_dist,
+    'simplified_mesh': simplified_mesh,
     'train_losses': [],
     'train_accuracies': [],
     'test_losses': [],
@@ -179,6 +181,13 @@ training_info = {
     'best_epoch': best_epoch
 }
 
+# Create a text file with training setup details
+with open(os.path.join(results_dir_current, 'training_setup.txt'), 'w') as f:
+    f.write(f"Paths\n")
+
+# Mesh qui ne cause pas de CUDA out of memory
+df_mesh_ok = pd.DataFrame(columns=['Epoch', 'Batch', 'Name', 'Mesh_Vertices', 'Target', 'Points_Shape'])
+df_mesh_ok.to_csv(os.path.join(results_dir_current, 'mesh_ok.csv'), index=False)
 ###############################################################################################
 for epoch in range(epochs):
     print(f"\n ➰​ Epoch {epoch + 1}/{epochs}")
@@ -190,22 +199,50 @@ for epoch in range(epochs):
     
     train_pbar = tqdm.tqdm(total=len(train_loader), desc=f"Training")
     
-    for i, (targets, meshes, points, names) in enumerate(train_loader):     
-        azim, elev, dist = mvtn(points, c_batch_size=len(targets))
-        rendered_images, _ = mvrenderer(meshes, points, azim=azim, elev=elev, dist=dist)
-        outputs = mvnetwork(rendered_images)[0]
+    for i, (targets, meshes, points, names) in enumerate(train_loader):    
+        try :
+            azim, elev, dist = mvtn(points, c_batch_size=len(targets))
+            rendered_images, _ = mvrenderer(meshes, points, azim=azim, elev=elev, dist=dist)
+            outputs = mvnetwork(rendered_images)[0]
 
-        loss = criterion(outputs, targets.cuda())
-        running_loss += loss.item()
-        loss.backward()
-        correct += (torch.max(outputs, dim=1)[1] == targets.cuda()).to(torch.int32).sum().item()
+            loss = criterion(outputs, targets.cuda())
+            running_loss += loss.item()
+            loss.backward()
+            correct += (torch.max(outputs, dim=1)[1] == targets.cuda()).to(torch.int32).sum().item()
+            
+            optimizer.step()
+            optimizer.zero_grad()
+            
+            if mvtn_optimizer is not None:
+                mvtn_optimizer.step()
+                mvtn_optimizer.zero_grad()
+                
+            for n in range(len(names)):
+                # Add data to the df_mesh_ok dataframe
+                new_row = pd.DataFrame({
+                    'Epoch': [f"{epoch + 1}"],
+                    'Batch': [f"{i + 1}"],
+                    'Name': [names[n]],
+                    'Mesh_Vertices': [meshes[n].verts_packed().shape[0]],
+                    'Target': [targets[n].item()],
+                    'Points_Shape': [str(points[n].shape)]
+                })
+                df_mesh_ok = pd.concat([df_mesh_ok, new_row], ignore_index=True)
+                # Save the dataframe after each update
+                df_mesh_ok.to_csv(os.path.join(results_dir_current, 'mesh_ok.csv'), index=False)
         
-        optimizer.step()
-        optimizer.zero_grad()
-        
-        if mvtn_optimizer is not None:
-            mvtn_optimizer.step()
-            mvtn_optimizer.zero_grad()
+        except RuntimeError as e: # Catch RuntimeError
+            if "CUDA out of memory" in str(e):
+                print(f"\n🚨 CUDA OUT OF MEMORY ERROR DETECTED DURING TRAINING!")
+                print(f"  - Epoch: {epoch + 1}, Batch: {i + 1}")
+                # Save these details to a log file
+                with open(os.path.join(results_dir_current, 'cuda_error_meshes_train.txt'), 'a') as f:
+                    f.write(f"Epoch {epoch + 1}, Batch {i + 1}:\n")
+                    for i in range(len(meshes)):
+                        line = f"Name: {names[i]}, Mesh: {meshes[i].verts_packed().shape[0]}, Target: {targets[i]}, Points shape: {points[i].shape}"
+                        f.write(line + "\n")
+                raise e
+            else: raise e
             
         # Update progress bar with current loss and accuracy
         current_loss = running_loss / (i + 1)
@@ -228,20 +265,33 @@ for epoch in range(epochs):
     test_pbar = tqdm.tqdm(total=len(test_loader), desc=f"Testing")
     
     for i, (targets, meshes, points, names) in enumerate(test_loader):
-        with torch.no_grad():
-            azim, elev, dist = mvtn(points, c_batch_size=len(targets))
-            rendered_images, _ = mvrenderer(meshes, points, azim=azim, elev=elev, dist=dist)
-            outputs = mvnetwork(rendered_images)[0]
+        try :
+            with torch.no_grad():
+                azim, elev, dist = mvtn(points, c_batch_size=len(targets))
+                rendered_images, _ = mvrenderer(meshes, points, azim=azim, elev=elev, dist=dist)
+                outputs = mvnetwork(rendered_images)[0]
 
-            loss = criterion(outputs, targets.cuda())
-            running_loss += loss.item()
-            correct_test += (torch.max(outputs, dim=1)[1] == targets.cuda()).to(torch.int32).sum().item()
-            
-            # Update progress bar with current loss and accuracy
-            current_loss = running_loss / (i + 1)
-            current_acc = 100.0 * correct_test / ((i + 1) * test_loader.batch_size)
-            test_pbar.set_postfix({'loss': f'{current_loss:.5f}', 'acc': f'{current_acc:.2f}%'})
-            test_pbar.update(1)
+                loss = criterion(outputs, targets.cuda())
+                running_loss += loss.item()
+                correct_test += (torch.max(outputs, dim=1)[1] == targets.cuda()).to(torch.int32).sum().item()
+                
+                # Update progress bar with current loss and accuracy
+                current_loss = running_loss / (i + 1)
+                current_acc = 100.0 * correct_test / ((i + 1) * test_loader.batch_size)
+                test_pbar.set_postfix({'loss': f'{current_loss:.5f}', 'acc': f'{current_acc:.2f}%'})
+                test_pbar.update(1)
+                
+        except RuntimeError as e: # Catch RuntimeError
+            if "CUDA out of memory" in str(e):
+                print(f"\n🚨 CUDA OUT OF MEMORY ERROR DETECTED DURING TESTING!")
+                print(f"  - Epoch: {epoch + 1}, Batch: {i + 1}")
+                with open(os.path.join(results_dir_current, 'cuda_error_meshes_test.txt'), 'a') as f:
+                    f.write(f"Epoch {epoch + 1}, Batch {i + 1}:\n")
+                    for i in range(len(meshes)):
+                        line = f"Name: {names[i]}, Mesh: {meshes[i].verts_packed().shape[0]}, Target: {targets[i]}, Points shape: {points[i].shape}"
+                        f.write(line + "\n")
+                raise e
+            else: raise e
 
     test_pbar.close()
     avg_test_loss = running_loss / len(test_loader)

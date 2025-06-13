@@ -58,7 +58,7 @@ class ModelNet40(Dataset):
 
         return classes, class_to_idx
 
-    def __init__(self, data_dir, split, nb_points=2048, simplified_mesh=False, cleaned_mesh=False, dset_norm=2, return_points_saved=False, is_rotated=False, samples_per_class=None, category = None):
+    def __init__(self, data_dir, split, simplified_mesh, nb_points=2048, cleaned_mesh=False, dset_norm=2, return_points_saved=False, is_rotated=False, samples_per_class=None, category = None):
         # self.x = []
         self.y = []
         self.data_list =[]
@@ -134,6 +134,7 @@ class ModelNet40(Dataset):
             threeobject = trimesh.load(self.data_list[index])
 
         else:
+            #print("Loading simplified mesh for ModelNet40")
             threeobject = trimesh.load(self.simplified_data_list[index])
         
 
@@ -173,7 +174,10 @@ class ModelNet40(Dataset):
             points = torch.from_numpy(rotation_matrix(rot_axis, angle).dot(points.T).T).to(torch.float)
             points = torch_center_and_normalize(points, p=self.dset_norm)
 
-        return self.y[index], mesh, points, self.simplified_data_list[index]
+        if self.simplified_mesh :
+            return self.y[index], mesh, points, self.simplified_data_list[index]
+        else:
+            return self.y[index], mesh, points, self.data_list[index]
        
 
     # Override to give PyTorch size of dataset
