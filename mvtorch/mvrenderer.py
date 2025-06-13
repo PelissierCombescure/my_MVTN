@@ -102,7 +102,7 @@ class MVRenderer(nn.Module):
         rendered_images = rendered_images[..., 0:3].transpose(2, 4).transpose(3, 4)
         
         if projection:
-            return rendered_images, cameras, meshes, new_meshes, R, T
+            return rendered_images, cameras, meshes, new_meshes, R, T, renderer
         else:     
             return rendered_images, cameras
 

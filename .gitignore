@@ -6,3 +6,4 @@ mvtorch/__pycache__/
 
 results/old/*
 logs*
+outputs/*

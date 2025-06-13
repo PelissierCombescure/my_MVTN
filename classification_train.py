@@ -24,7 +24,7 @@ from earlyStop import EarlyStopping
 
 from utils_mvtn import *
 
-# CUDA_VISIBLE_DEVICES=1 python3 classification_train.py -nb_views 2 -epochs 100 -batch_size 16 -category all -data_dir /home/mpelissi/Dataset/ModelNet40/ -log_suffix circular -view_config spherical
+# CUDA_VISIBLE_DEVICES=1 python3 classification_train.py -nb_views 2 -epochs 100 -batch_size 16 -category all -data_dir /home/mpelissi/Dataset/ModelNet40/ -log_suffix circular -view_config spherical -mesh_rendering
 
 parser = argparse.ArgumentParser(description='Train a multi-view network for classification.')
 parser.add_argument('-nb_views', '--nb_views', type=int, required=True, help='Number of views')

@@ -7,7 +7,7 @@ from pytorch3d.renderer import look_at_view_transform, OpenGLOrthographicCameras
 from pytorch3d.structures import Meshes
 
 
-def my_render_meshes(meshes, color, azim, elev, dist, lights, background_color=(1.0, 1.0, 1.0), ):
+def my_render_meshes(meshes, color, azim, elev, dist, lights, background_color=(1.0, 1.0, 1.0)):
         c_batch_size = len(meshes)
         verts = [msh.verts_list()[0].cuda() for msh in meshes]
         faces = [msh.faces_list()[0].cuda() for msh in meshes]

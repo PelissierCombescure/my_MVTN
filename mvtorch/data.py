@@ -58,7 +58,7 @@ class ModelNet40(Dataset):
 
         return classes, class_to_idx
 
-    def __init__(self, data_dir, split, simplified_mesh, nb_points=2048, cleaned_mesh=False, dset_norm=2, return_points_saved=False, is_rotated=False, samples_per_class=None, category = None):
+    def __init__(self, data_dir, split, simplified_mesh, nb_points=2048, cleaned_mesh=False, dset_norm=2, return_points_saved=False, is_rotated=False, samples_per_class=None, category = None, projection = False):
         # self.x = []
         self.y = []
         self.data_list =[]
@@ -72,6 +72,7 @@ class ModelNet40(Dataset):
         self.return_points_sampled = not return_points_saved
         self.return_points_saved = return_points_saved
         self.initial_angle = -90 # correcting the pose of the meshes by -90 degrees around the x-axis
+        self.projection = projection # if True, the mesh will be projected to 2D and returned as a 2D image
 
         # self.return_extracted_features = setup["return_extracted_features"]
         # self.features_type = setup["features_type"]
@@ -173,6 +174,7 @@ class ModelNet40(Dataset):
                 points = load_obj(self.points_list[index])
             points = torch.from_numpy(rotation_matrix(rot_axis, angle).dot(points.T).T).to(torch.float)
             points = torch_center_and_normalize(points, p=self.dset_norm)
+
 
         if self.simplified_mesh :
             return self.y[index], mesh, points, self.simplified_data_list[index]
