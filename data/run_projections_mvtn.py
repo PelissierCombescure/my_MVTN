@@ -74,8 +74,10 @@ background_color = torch_color(mvrenderer.background_color, mvrenderer.backgroun
 color = mvrenderer.rendering_color(None)
 print(f"Loading MVTN with {nb_views} views and config : {views_config} -OK\n")
 
-for dset, loader in zip([dset_train, dset_test], [train_loader, test_loader]):
+#for dset, loader in zip([dset_train, dset_test], [train_loader, test_loader]):
+for dset, loader in zip([dset_train], [train_loader]):
     print(f"🔎​​​ Dataset {dset.split} - {len(loader)} samples")
+    print('juste train')
     total_batches = len(loader); bar_len = 50
     
     for i, (_, _, points, names) in enumerate(loader):   

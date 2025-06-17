@@ -1,0 +1,3 @@
+Epoch 1, Batch 2634:
+Name: /home/mpelissi/Dataset/ModelNet40//curtain/train/curtain_0130_SMPLER.obj, Mesh: 1143084, Target: 11, Points shape: torch.Size([2048, 3])
+Name: /home/mpelissi/Dataset/ModelNet40//chair/train/chair_0886_SMPLER.obj, Mesh: 966, Target: 8, Points shape: torch.Size([2048, 3])
