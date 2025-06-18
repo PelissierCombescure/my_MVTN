@@ -20,7 +20,7 @@ CUDA_VISIBLE_DEVICES=1 python3 run_projections_mvtn_parallel_test_train.py \
     --view_config $VIEW_CONFIG \
     --dir_output $DIR_OUTPUT \
     --split train \
-    > logs/train.log 2>&1 &
+    > logs/train_${VIEW_CONFIG}_${NB_VIEWS}.log 2>&1 &
 
 # Run test split
 CUDA_VISIBLE_DEVICES=1 python3 run_projections_mvtn_parallel_test_train.py \
@@ -28,7 +28,7 @@ CUDA_VISIBLE_DEVICES=1 python3 run_projections_mvtn_parallel_test_train.py \
     --view_config $VIEW_CONFIG \
     --dir_output $DIR_OUTPUT \
     --split test \
-    > logs/test.log 2>&1 &
+    > logs/test_${VIEW_CONFIG}_${NB_VIEWS}.log 2>&1 &
 
 # Wait for both jobs
 wait
