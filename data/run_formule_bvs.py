@@ -42,7 +42,8 @@ print(f"Parmi ces {len(paths_projection)} mesh, on a les saillances de {len(name
 
 
 paths_NAN = []
-seuil_NAN = 0.05
+paths_NAN_ok = []
+seuil_NAN = 0.1
 
 results = []
 for path_limper in tqdm.tqdm(paths_limper):
@@ -59,7 +60,8 @@ for path_limper in tqdm.tqdm(paths_limper):
             ## les valeurs des saillances sont déjà normalisées entre 0 et 1
 
             dict_scores = {}
-            contain_nan = False
+            too_much_nan = False; contain_nan = False
+            suffix = ""
             # Pour chaque pov
             for i in range(0, nb_view): 
                 #print(k)
@@ -73,22 +75,26 @@ for path_limper in tqdm.tqdm(paths_limper):
                 cos_angles = data_cam_i['cos_angles']
                 # Somme [limper*angle]
                 saillance_limper_visible = saillance_limper[sommets_visible]
-                if np.isnan(saillance_limper_visible).any() : contain_nan = True
+                # Vérification des NaN
+                if np.isnan(saillance_limper_visible).any() : 
+                    contain_nan = True
+                    taux_nan = len(np.where(np.isnan(saillance_limper_visible))[0])/len(saillance_limper_visible)
+                    saillance_limper_visible[np.isnan(saillance_limper_visible)] = 0.0
+                else : taux_nan = 0
+                # Terme de saillance
                 terme_somme_saillance = np.sum(saillance_limper_visible*cos_angles[sommets_visible])
-                if len(np.where(np.isnan(cos_angles[sommets_visible]))[0])>0: print(i+1, name)
                 # Surface 3D + 'normalisation' : on divise par la surface 3D totale de l'objet
                 terme_surface3d = data_cam_i['surface3D_visible']/data_cam_i['surface3D']
                 
                 # Sauvegardes des termes
                 dict_scores['cam_'+str(i+1)] = {'terme_surface3d': terme_surface3d, 'saillance': terme_somme_saillance}
-                
-                taux_nan = len(np.where(np.isnan(saillance_limper_visible))[0])/len(saillance_limper_visible)
-                if taux_nan > seuil_NAN:
-                    contain_nan = True
-                    paths_NAN.append((path_limper, taux_nan))
+                                
+                # Trop de NAN
+                if contain_nan & (taux_nan > seuil_NAN):
+                    too_much_nan = True
                     break
             
-            if not contain_nan:
+            if not too_much_nan:
                 # Normalisation du terme de saillance pour les nb_view povs
                 max_terme_saillance = np.max([dict_scores['cam_'+str(i+1)]['saillance'] for i in range(0, nb_view)])
                 dict_scores = {k: {'terme_surface3d': v['terme_surface3d'], 'saillance': v['saillance'], 
@@ -106,41 +112,51 @@ for path_limper in tqdm.tqdm(paths_limper):
                 # BVS 
                 score_max = np.max([dict_scores[k]['score'] for k in dict_scores.keys()])
                 dict_scores['bvs'] = [k for k in dict_scores.keys() if dict_scores[k]['score'] == score_max][0]
-
                 # si plusieurs 
                 if len([k for k in dict_scores.keys() if (('cam' in k) and (dict_scores[k]['score'] == score_max))]) > 1: print("Plusieurs pov", name)
-
                 metadata = {
                     "name_limper": path_limper, "categorie": cat, "type": type, "name": name,
                     "bvs" : dict_scores['bvs'], "score_max": score_max, "score_max_norm": dict_scores[dict_scores['bvs']]['score_norm'], 
                     "scores": dict_scores}
-
-                with open(os.path.join(dir_output, cat, type, name+"_bvs.pkl"), "wb") as f: pickle.dump(metadata, f)
-                print("Enregistrement de", os.path.join(dir_output, cat, type, name+"_bvs.pkl"))
+                
+                # Contient des nan MAIS pas bcp pour être ici
+                if contain_nan : 
+                    paths_NAN_ok.append(path_limper)
+                    results.append(('nan mais ok', path_limper, "nan < seuil", too_much_nan))
+                    suffix = "fewnan"
             
-                #Ajout du résultat
-                results.append(('ok', path_limper, "RAS", contain_nan))
+                else : # RAS pas de NAN
+                    suffix = "ras"
+                    results.append(('ok', path_limper, "RAS", too_much_nan))
+                    
+                with open(os.path.join(dir_output, cat, type, name+f"_bvs_{suffix}.pkl"), "wb") as f: pickle.dump(metadata, f)
+                #print("Enregistrement de", os.path.join(dir_output, cat, type, name+"_bvs.pkl"))
+                
+            # Trop de NaN
             else:
-                results.append(('nan', path_limper, "Contient des NaN", contain_nan))
+                results.append(('too much nan', path_limper, "Contient TROP de NaN", too_much_nan))
+                paths_NAN.append((path_limper, taux_nan))
+                
+        # Déjà traité
         else :
             results.append(("skip", path_limper, "Déjà traité", False))         
     
     except Exception as e:
-        #print(e)
-        results.append(("pbl",path_limper, e, contain_nan)) 
+        results.append(("pbl",path_limper, e, too_much_nan)) 
         
-        
-with open(os.path.join('/home/mpelissi/MVTN/my_MVTN/data/error', "results_bvs.txt"), "w") as f:
-    f.write("Date: {:%Y-%m-%d %H:%M:%S} - Error during saving\n".format(datetime.now()))
-    for p in paths_NAN:
-        f.write(f"{p[0]} - Taux de NaN : {p[1]}\n")
-        
-
+##############################################################################
 # Write results to file
 # List all files in thee current directory
 files_in_directory = os.listdir('/home/mpelissi/MVTN/my_MVTN/data/error')
 # Filter files containing the word 'error'
-nb_error_files = len([file for file in files_in_directory if (('error' in file) and ('bvs' in file))])
+nb_error_files = len([file for file in files_in_directory if ((view_config in file) and ('bvs' in file))])
+
+# fichiers avec nan mis à 0
+with open(os.path.join('/home/mpelissi/MVTN/my_MVTN/data/error', f"bvs_nan_run{nb_error_files+1}_{view_config}_{nb_view}.txt"), "w") as f:
+    f.write("Date: {:%Y-%m-%d %H:%M:%S} - Error during saving\n".format(datetime.now()))
+    for p in paths_NAN:
+        f.write(f"{p[0]} - Taux de NaN : {p[1]}\n")
+
 if nb_error_files >= 0: 
     file_name = os.path.join('/home/mpelissi/MVTN/my_MVTN/data/error', f"error_bvs_run{nb_error_files+1}_{view_config}_{nb_view}.txt")
     
