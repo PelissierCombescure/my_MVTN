@@ -58,7 +58,7 @@ class ModelNet40(Dataset):
 
         return classes, class_to_idx
 
-    def __init__(self, data_dir, split, simplified_mesh, nb_points=2048, cleaned_mesh=False, dset_norm=2, return_points_saved=False, is_rotated=False, samples_per_class=None, category = None, projection = False):
+    def __init__(self, data_dir, split, simplified_mesh, nb_points=2048, cleaned_mesh=False, dset_norm=2, return_points_saved=False, is_rotated=False, samples_per_class=None, category = None, projection = False, inference=False, list_bvs = None):
         # self.x = []
         self.y = []
         self.data_list =[]
@@ -83,6 +83,7 @@ class ModelNet40(Dataset):
         self.is_rotated = is_rotated
 
         # root / <label>  / <train/test> / <item> / <view>.png
+        if inference and list_bvs is not None: print("⚠️​ ⚠️​    Using inference mode with list of bvs")
         for label in os.listdir(self.data_dir):  # Label
             # Get all .off files in the current directory
             if "remeshing_iso" in data_dir: extension = ".obj"                
@@ -92,8 +93,12 @@ class ModelNet40(Dataset):
             
             # Focus on a specific category if specified
             if category != 'all':
-                items = [item for item in items if category in item]               
+                items = [item for item in items if category in item]  
                 
+            # Garder que les fichiers dont on a la bvs      
+            if inference and list_bvs is not None:
+                intersection = set([i.split('.')[0] for i in items]).intersection(set(list_bvs))   
+                items = [i + extension for i in intersection]            
 
             # If samples_per_class is specified, limit the number of items
             if samples_per_class is not None:
