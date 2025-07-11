@@ -1,0 +1,7 @@
+06-30_12h10m02 -- Errors during inference will be logged here.
+​❌​  No BVS available for folder results_06-06_10h45m03. Skipping this folder.
+​❌​  No BVS available for folder results_06-06_10h46m35. Skipping this folder.
+​❌​  No BVS available for folder results_06-05_17h13m24. Skipping this folder.
+​❌​  No BVS available for folder results_05-19_18h20m13. Skipping this folder.
+​❌​  No BVS available for folder results_05-14_18h05m48. Skipping this folder.
+​❌​  No BVS available for folder results_06-10_15h50m23. Skipping this folder.

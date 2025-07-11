@@ -1,0 +1,4 @@
+Dans cette inférence : 
+* seul considéré circular-12 et sphericl-12, car les autres projection (circular-20...) ne sont pas disponibles dans le dossier.
+* Pbl avec simplified_mesh
+* Chacun BVS est sélectionné et repliqué 12 fois donc le mvnetwork reçoit 12 fois les mêmes images pour chaque objet.
