@@ -111,7 +111,10 @@ class ModelNet40(Dataset):
         if True :
             
             if "remeshing_iso" in data_dir: 
-                self.simplified_data_list = self.data_list                
+                self.simplified_data_list = self.data_list      
+            elif "aligned"  in data_dir:
+                print("Simplified meshes == aligned meshes")
+                self.simplified_data_list = self.data_list                             
             else :                               
                 self.simplified_data_list = [file_name.replace(
                     ".off", "_SMPLER.obj") for file_name in self.data_list if file_name[-4::]==".off"]

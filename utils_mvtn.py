@@ -2,6 +2,42 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import cm
 import os
+import trimesh
+from tqdm import tqdm
+from scipy.spatial import cKDTree
+
+
+def get_rotation(pt_cloud, pt_cloud_ref, angles=np.linspace(0, 360, 73)):
+    rotations = []
+    for axe in ['X', 'Y', 'Z']:
+        var_list = []
+        for angle in angles:
+            proj_vertices_tmp = pt_cloud.copy()
+            matrix_tmp = create_rotation_matrix(axe, angle)
+            proj_vertices_tmp = proj_vertices_tmp @ matrix_tmp[:3, :3]
+            kdtree_tmp = cKDTree(proj_vertices_tmp)
+            distances_tmp, _ = kdtree_tmp.query(pt_cloud_ref)
+            var_list.append(np.var(distances_tmp))
+        # position valeur minimale de la variance
+        idx_min = np.argmin(var_list);angle_min = angles[idx_min]
+        #print(f"Angle {axe} min: {angle_min}°")
+        rotations.append((axe, angle_min))
+    return rotations
+
+def create_rotation_matrix(axis, angle_degrees):
+    # Convertir l'angle en radians
+    angle_radians = np.radians(angle_degrees)
+    # Déterminer le vecteur de direction en fonction de l'axe
+    if axis.upper() == 'X':    direction = [1, 0, 0]
+    elif axis.upper() == 'Y':  direction = [0, 1, 0]
+    elif axis.upper() == 'Z':  direction = [0, 0, 1]
+    else: raise ValueError("L'axe doit être 'X', 'Y' ou 'Z'.")
+    # Créer la matrice de rotation
+    rotation_matrix = trimesh.transformations.rotation_matrix(
+        angle=angle_radians,  # Angle en radians
+        direction=direction,  # Axe de rotation
+        point=[0, 0, 0])  # Centre de rotation (origine)
+    return rotation_matrix
 
 def save_loss_acc(path_to_save, train_losses, test_losses, train_accuracies, test_accuracies, plot_best = False, best_epoch = None):
     

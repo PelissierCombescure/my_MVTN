@@ -54,7 +54,9 @@ all_mesh_iso = glob.glob(os.path.join(dir_remeshing, "*/*/*.obj")); print(f"🔎
 
 ###### Global parameters
 bs = 1
-data_dir = "/home/mpelissi/Dataset/ModelNet40/"
+######################################################""""
+data_dir = "/media/disk1/mpelissi-data/Aligned/modelnet40_auto_aligned/"#"/home/mpelissi/Dataset/ModelNet40/"
+#######################################################
 category = "all"
 simplified_mesh = True
 points_per_pixel=1; points_radius=0.02; image_size=224
@@ -78,7 +80,7 @@ print(f"Loading MVTN with {nb_views} views and config : {views_config} -OK\n")
 
 
 # Create a simple text file
-with open(f"error_{args.split}_{views_config}_{nb_views}.txt", 'w') as file_error:
+with open(f"error/error_{args.split}_{views_config}_{nb_views}.txt", 'w') as file_error:
     file_error.write('This is a test file.\n')
     file_error.write('Created by the script.\n')
 
@@ -95,7 +97,10 @@ if True :
         azim, elev, dist = mvtn(points, c_batch_size=len(names))
         #### correspondant de names dans all_mesh_iso
         path_mesh_modelnet40 = names[0]
-        path_mesh_iso = [p for p in all_mesh_iso if os.path.basename(path_mesh_modelnet40).split('_SM')[0] in p][0]
+        
+        if "aligned" in data_dir : print('tot');path_mesh_iso = [p for p in all_mesh_iso if os.path.basename(path_mesh_modelnet40).split('.')[0] in p][0] # avec dataset Aligned Modelnet40
+        else : print('titi'); path_mesh_iso = [p for p in all_mesh_iso if os.path.basename(path_mesh_modelnet40).split('_SM')[0] in p][0] # avec dataset Modelnet40
+
         cat = path_mesh_iso.split('/')[-3]; type = path_mesh_iso.split('/')[-2]; name = path_mesh_iso.split('/')[-1].split('.')[0]
         
         if not os.path.exists(os.path.join(dir_output, cat, type, name+"_cam12_data.npz")):
@@ -206,7 +211,7 @@ if True :
             
             except Exception as e:
                 print(f"Error processing {path_mesh_iso}: {e}")
-                with open(f"error_{args.split}.txt", 'a') as file_error:
+                with open(f"error/error_{args.split}_{views_config}_{nb_views}.txt", 'a') as file_error:
                     file_error.write(f"Error processing {path_mesh_iso}: {e}\n")
                 continue
         

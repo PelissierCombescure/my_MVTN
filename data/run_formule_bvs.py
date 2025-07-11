@@ -13,16 +13,18 @@ import argparse
 parser = argparse.ArgumentParser(description='Train a multi-view network for classification.')
 parser.add_argument('-nb_views', '--nb_views', type=int, required=True, help='Number of views')
 parser.add_argument('-view_config', '--view_config', required=True, type=str)
+parser.add_argument('-dir_projection', '--dir_projection', required=True, type=str)
+parser.add_argument('-dir_output', '--dir_output', required=True, type=str)
 args = parser.parse_args()
 
 # nb vue
 nb_view = args.nb_views
 view_config = args.view_config
+dir_projection = args.dir_projection
+dir_output = args.dir_output
 
 # Data sur les projections
-dir_projection = f"/media/disk1/mpelissi-data/MVTN/{view_config}-{nb_view}/Projections"
 # Output
-dir_output = f"/media/disk1/mpelissi-data/MVTN/{view_config}-{nb_view}/BVS"
 print(f"Input directory: {dir_projection}")
 print(f"Output directory: {dir_output}")
 

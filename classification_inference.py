@@ -21,7 +21,8 @@ import pickle
 #  CUDA_VISIBLE_DEVICES=1 python3 classification_inference.py -nb_views 8
 
 dir_results = "/home/mpelissi/MVTN/my_MVTN/results/"
-data_dir = "/home/mpelissi/Dataset/ModelNet40"
+data_dir = "/media/disk1/mpelissi-data/Aligned/modelnet40_manually_aligned"#"/home/mpelissi/Dataset/ModelNet40"
+#### attention d'adapter le fichire infi.json, s'il vient de circulaur-12 ou circular-12-aligned
 
 def load_models(weights_dir, nb_views, num_classes=40, df=None):
     """
@@ -54,7 +55,7 @@ def replicate_img(rendered_images, num_cam_bvs):
         
     return replicated_rendered_images
 
-def evaluate_test_set(mvnetwork, mvtn, mvrenderer, test_loader, save_dir=None, nb_views=None, dir_weights=None, data_dir=None, category=None, pkl_data_bvs=None):
+def evaluate_test_set(mvnetwork, mvtn, mvrenderer, test_loader, save_dir=None, nb_views=None, dir_weights=None, data_dir=None, category=None, pkl_data_bvs=None, one_by_one=None):
     """
     Evaluate the model on the test set and optionally save view parameters and rendered images
     """
@@ -83,7 +84,7 @@ def evaluate_test_set(mvnetwork, mvtn, mvrenderer, test_loader, save_dir=None, n
                     #print(n, path_bvs_n, bvs_n_data['bvs'], num_cam_bvs[-1]) 
                 replicated_rendered_images = replicate_img(rendered_images, num_cam_bvs)   
             
-            num_vue = 1
+            num_vue = one_by_one
             rendered_images = replicate_img(rendered_images, [num_vue] * len(targets))  
             
             # Get predictions 
@@ -122,7 +123,7 @@ def evaluate_test_set(mvnetwork, mvtn, mvrenderer, test_loader, save_dir=None, n
     views_parameters['accuracy_inference'] = accuracy_inference
     views_parameters['accuracy_bvs'] = accuracy_bvs
     views_parameters['nb_test_file'] = total
-    views_parameters['RQ'] = f"inf_view{num_vue}"
+    views_parameters['RQ'] = f"inference_view{num_vue}"
     
     # Save view parameters
     with open(os.path.join(save_dir, 'view_parameters.json'), 'w') as f:
@@ -184,10 +185,11 @@ def main():
     parser.add_argument('-nb_views', '--nb_views', type=int, default = -1, help='Number of views')
     parser.add_argument('-category', '--category', default='all', type=str, help='Model name')
     parser.add_argument('-view_config', '--view_config', default='toto', type=str, help='Model name')
+    parser.add_argument('-one_by_one', '--one_by_one', type=int, help='Model name')
     args = parser.parse_args()
     nb_views = args.nb_views
     category = args.category
-    view_config = args.view_config
+    one_by_one = args.one_by_one
     
     if nb_views == -1: # inference sur tous les dossiers de overview.csv
         overview_file = "results/train/overview.csv"  
@@ -203,7 +205,7 @@ def main():
     #else : # un dossier en particulier
         ## TODO
     
-    for folder_path, folder_name in tqdm(folders[1:]):
+    for folder_path, folder_name in tqdm(folders):
         try :
         #if True:
             print('\n' + '='*50)
@@ -225,9 +227,11 @@ def main():
                     continue
             
                 # Load dataset for class names
-                with open(f"/media/disk1/mpelissi-data/MVTN/{list(row_df['views_config'])[0]}-{list(row_df['nb_views'])[0]}/info.json", 'r') as f:
+                with open(f"/media/disk1/mpelissi-data/MVTN/{list(row_df['views_config'])[0]}-{list(row_df['nb_views'])[0]}-aligned/info.json", 'r') as f:
                     pkl_data_bvs = json.load(f)
-                dset_test = ModelNet40(data_dir=data_dir, split='test', samples_per_class=None, category=category, simplified_mesh=list(row_df['simplified_mesh'])[0], inference=True, list_bvs=pkl_data_bvs['name_files'])
+                    print(f"​​✅​  BVS data loaded from {f.name}")
+                #dset_test = ModelNet40(data_dir=data_dir, split='test', samples_per_class=None, category=category, simplified_mesh=list(row_df['simplified_mesh'])[0], inference=True, list_bvs=pkl_data_bvs['name_files'])
+                dset_test = ModelNet40(data_dir=data_dir, split='test', samples_per_class=None, category=category, simplified_mesh=False, inference=True, list_bvs=pkl_data_bvs['name_files'])
                 test_loader = CustomDataLoader(dset_test, batch_size=int(row_df['batch_size']), shuffle=False, drop_last=False, pin_memory=True)
             
                 # Load models
@@ -236,7 +240,7 @@ def main():
                 
                 # Evaluate on test set and save view parameters
                 print("🔎​  Evaluating on test set...")
-                acc_inference, acc_bvs, targets, pred_inference, pred_bvs, RQ = evaluate_test_set(mvnetwork, mvtn, mvrenderer, test_loader, save_dir=save_dir, nb_views=list(row_df['nb_views'])[0], dir_weights=dir_best_weights, data_dir = data_dir, category = category, pkl_data_bvs = pkl_data_bvs)
+                acc_inference, acc_bvs, targets, pred_inference, pred_bvs, RQ = evaluate_test_set(mvnetwork, mvtn, mvrenderer, test_loader, save_dir=save_dir, nb_views=list(row_df['nb_views'])[0], dir_weights=dir_best_weights, data_dir = data_dir, category = category, pkl_data_bvs = pkl_data_bvs, one_by_one=one_by_one)
                 print(f"🚀​  Test Accuracy inference: {acc_inference:.2f}%")
                 print(f"🚀​  Test Accuracy with BVS: {acc_bvs:.2f}%")
                 overview_df_update.loc[row_idx, 'nb_test_inference'] = len(dset_test)
@@ -246,8 +250,8 @@ def main():
                 
                 # Plot confusion matrices
                 print("Generating confusion matrices...")
-                plot_confusion_matrix(pred_inference, targets, dset_test.classes, save_dir=save_dir, suffix='_inference')
-                plot_confusion_matrix(pred_bvs, targets, dset_test.classes, save_dir=save_dir, suffix='_bvs')
+                plot_confusion_matrix(pred_inference, targets, dset_test.classes, save_dir=save_dir, suffix='_inference-view' + str(one_by_one))
+                plot_confusion_matrix(pred_bvs, targets, dset_test.classes, save_dir=save_dir, suffix='_bvs-view'+str(one_by_one))
                 print(f"​📊​  Confusion matrices saved at {save_dir} ")
 
             else : 
